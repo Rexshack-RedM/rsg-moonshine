@@ -4,6 +4,8 @@ Placeable moonshine stills for **RedM** on the **RSG Framework**. Players set up
 
 Brewing runs on the server in real time, so stills keep cooking while the owner is away and carry on through restarts.
 
+<img width="1007" height="1080" alt="20261012200236_1" src="https://github.com/user-attachments/assets/013a1300-c22d-45aa-8547-c928d73c787f" />
+
 ---
 
 ## Features
