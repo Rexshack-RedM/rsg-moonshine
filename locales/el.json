@@ -126,5 +126,8 @@
     "wh_field_lost": "Χάθηκαν στη δεξαμενή",
     "wh_none": "κανένα",
     "wh_unknown": "άγνωστο",
-    "wh_na": "μ/δ"
+    "wh_na": "μ/δ",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

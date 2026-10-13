@@ -126,5 +126,8 @@
     "wh_field_lost": "Pierdut în rezervor",
     "wh_none": "niciuna",
     "wh_unknown": "necunoscut",
-    "wh_na": "n/a"
+    "wh_na": "n/a",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

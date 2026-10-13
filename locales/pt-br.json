@@ -126,5 +126,8 @@
     "wh_field_lost": "Perdido no tanque",
     "wh_none": "nenhuma",
     "wh_unknown": "desconhecido",
-    "wh_na": "n/d"
+    "wh_na": "n/d",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

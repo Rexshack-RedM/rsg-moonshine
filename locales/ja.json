@@ -126,5 +126,8 @@
     "wh_field_lost": "タンク損失",
     "wh_none": "なし",
     "wh_unknown": "不明",
-    "wh_na": "該当なし"
+    "wh_na": "該当なし",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

@@ -7,6 +7,7 @@ local placing = false
 local Fx      = {}    -- [id] = { particle handles }
 local uiOpen  = nil   -- still id while the NUI is open
 local uiReady = false -- page confirmed it rendered
+local WorldObj = {}   -- [id] = map prop entity for static world stills (never deleted by us)
 
 ---------------------------------
 -- helpers
@@ -46,7 +47,7 @@ local function stopFx(id)
 end
 
 local function startFx(id)
-    local obj = Objects[id]
+    local obj = Objects[id] or WorldObj[id]
     if Fx[id] or not obj or not Config.BrewFx.enabled then return end
     local dict = Config.BrewFx.dict
     local hash = joaat(dict)
@@ -122,7 +123,21 @@ local function refreshNearby()
     local pos = GetEntityCoords(PlayerPedId())
     for id, s in pairs(Stills) do
         local near = #(pos - s.coords) <= Config.SpawnDist
-        if near and not Objects[id] then
+        if s.world then
+            -- map prop: just track the entity for particle effects
+            if near and not (WorldObj[id] and DoesEntityExist(WorldObj[id])) then
+                stopFx(id)
+                WorldObj[id] = nil
+                for _, m in ipairs(Config.WorldStills.models) do
+                    local e = GetClosestObjectOfType(s.coords.x, s.coords.y, s.coords.z, 1.5, m, false, false, false)
+                    if e and e ~= 0 then WorldObj[id] = e break end
+                end
+                updateFx(id)
+            elseif not near and WorldObj[id] then
+                stopFx(id)
+                WorldObj[id] = nil
+            end
+        elseif near and not Objects[id] then
             spawnStill(s)
             updateFx(id)
         elseif not near and Objects[id] then
@@ -146,6 +161,8 @@ end
 local function loadStills()
     local list = lib.callback.await('rsg-moonshine:server:getStills', false)
     for id in pairs(Objects) do despawnStill(id) end
+    for id in pairs(WorldObj) do stopFx(id) end
+    WorldObj = {}
     Stills = {}
     for _, s in ipairs(list or {}) do Stills[s.id] = s end
     refreshNearby()
@@ -157,6 +174,8 @@ RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
     streaming = false
     closeUi()
     for id in pairs(Objects) do despawnStill(id) end
+    for id in pairs(WorldObj) do stopFx(id) end
+    WorldObj = {}
     Stills = {}
 end)
 AddEventHandler('onResourceStart', function(res)
@@ -167,12 +186,16 @@ AddEventHandler('onResourceStop', function(res)
     streaming = false
     closeUi()
     for id in pairs(Objects) do despawnStill(id) end
+    for id in pairs(WorldObj) do stopFx(id) end
+    if Config.WorldStills and Config.WorldStills.enabled then exports.ox_target:removeModel(Config.WorldStills.models, 'moonshine_world_still') end
 end)
 
 RegisterNetEvent('rsg-moonshine:client:syncStill', function(s)
     Stills[s.id] = s
-    if Objects[s.id] then
+    if Objects[s.id] or WorldObj[s.id] then
         updateFx(s.id)
+    elseif s.world then
+        refreshNearby()
     elseif #(GetEntityCoords(PlayerPedId()) - s.coords) <= Config.SpawnDist then
         spawnStill(s)
         updateFx(s.id)
@@ -182,6 +205,7 @@ end)
 RegisterNetEvent('rsg-moonshine:client:removeStill', function(id)
     if uiOpen == id then closeUi() end
     Stills[id] = nil
+    WorldObj[id] = nil
     despawnStill(id)
 end)
 
@@ -231,8 +255,8 @@ openStillMenu = function(id)
             Wait(500)
             ticks = ticks + 1
             local ped = PlayerPedId()
-            local obj = Objects[id]
-            if not obj or IsEntityDead(ped) or #(GetEntityCoords(ped) - GetEntityCoords(obj)) > Config.InteractDist then
+            local s = Stills[id]
+            if not s or IsEntityDead(ped) or #(GetEntityCoords(ped) - s.coords) > Config.InteractDist then
                 closeUi()
                 break
             end
@@ -283,6 +307,34 @@ RegisterNUICallback('action', function(data, cb)
     end
     cb('ok')
 end)
+
+---------------------------------
+-- static world stills (map props)
+---------------------------------
+local function isPlacedStill(entity)
+    for _, obj in pairs(Objects) do if obj == entity then return true end end
+    return false
+end
+
+if Config.WorldStills and Config.WorldStills.enabled then
+    exports.ox_target:addModel(Config.WorldStills.models, {
+        {
+            name = 'moonshine_world_still',
+            icon = 'fa-solid fa-whiskey-glass',
+            label = locale('cl_check'),
+            distance = Config.WorldStills.distance or 2.5,
+            canInteract = function(entity) return not isPlacedStill(entity) end,
+            onSelect = function(data)
+                local s = lib.callback.await('rsg-moonshine:server:getWorldStill', false, GetEntityCoords(data.entity))
+                if not s then return end
+                Stills[s.id] = s
+                WorldObj[s.id] = data.entity
+                updateFx(s.id)
+                openStillMenu(s.id)
+            end,
+        },
+    })
+end
 
 ---------------------------------
 -- placement

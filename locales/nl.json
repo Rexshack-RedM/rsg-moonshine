@@ -126,5 +126,8 @@
     "wh_field_lost": "Verloren in tank",
     "wh_none": "geen",
     "wh_unknown": "onbekend",
-    "wh_na": "n.v.t."
+    "wh_na": "n.v.t.",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

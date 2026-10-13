@@ -126,5 +126,8 @@
     "wh_field_lost": "Utracone w zbiorniku",
     "wh_none": "brak",
     "wh_unknown": "nieznany",
-    "wh_na": "b/d"
+    "wh_na": "b/d",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

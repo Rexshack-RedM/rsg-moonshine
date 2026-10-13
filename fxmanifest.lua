@@ -2,8 +2,8 @@ fx_version 'cerulean'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 game 'rdr3'
 
-description 'rsg-moonshine - placeable stills & moonshine brewing'
-version '3.0.0'
+description 'rsg-moonshine'
+version '3.0.1'
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -19,7 +19,8 @@ server_scripts {
 }
 
 client_scripts {
-    'client/client.lua'
+    'client/client.lua',
+    'client/teleport.lua'
 }
 
 dependencies {

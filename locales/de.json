@@ -126,5 +126,8 @@
     "wh_field_lost": "Im Tank verloren",
     "wh_none": "keins",
     "wh_unknown": "unbekannt",
-    "wh_na": "k. A."
+    "wh_na": "k. A.",
+    "cl_speakeasy_use": "Use Hatch",
+    "cl_speakeasy_enter": "Enter",
+    "cl_speakeasy_exit": "Leave"
 }

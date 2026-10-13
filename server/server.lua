@@ -17,8 +17,10 @@ end
 
 local function isBrewing(s) return s.batch_left ~= nil and s.fuel > 0 end
 
+local WORLD = 'world' -- citizenid used for static map stills
+
 local function publicStill(s)
-    return { id = s.id, coords = s.coords, heading = s.heading, brewing = isBrewing(s) }
+    return { id = s.id, coords = s.coords, heading = s.heading, brewing = isBrewing(s), world = s.citizenid == WORLD or nil }
 end
 
 local function itemInfo(name)
@@ -53,7 +55,7 @@ local function isNear(src, coords, dist)
 end
 
 -- per-player throttles: throttled('action', src, 300) is true if called again within 300ms
-local Throttle = { action = {}, state = {}, destroy = {} }
+local Throttle = { action = {}, state = {}, destroy = {}, world = {} }
 local function throttled(bucket, src, ms)
     local now, last = GetGameTimer(), Throttle[bucket][src]
     if last and now - last < ms then return true end
@@ -73,7 +75,7 @@ local function isLaw(Player)
 end
 
 local function canUse(Player, still)
-    return (not Config.OwnerOnly) or still.citizenid == Player.PlayerData.citizenid
+    return (not Config.OwnerOnly) or still.citizenid == WORLD or still.citizenid == Player.PlayerData.citizenid
 end
 
 local function countOwned(cid)
@@ -459,6 +461,27 @@ lib.callback.register('rsg-moonshine:server:action', function(src, id, action, d
 end)
 
 ---------------------------------
+-- static world stills (map props) - find or create the saved still for a prop
+---------------------------------
+local creatingWorld = false
+lib.callback.register('rsg-moonshine:server:getWorldStill', function(src, coords)
+    if not Config.WorldStills.enabled or type(coords) ~= 'vector3' then return nil end
+    if not RSGCore.Functions.GetPlayer(src) or not isNear(src, coords) then return nil end
+    for _, s in pairs(Stills) do
+        if s.citizenid == WORLD and #(s.coords - coords) < 1.5 then return publicStill(s) end
+    end
+    if creatingWorld or throttled('world', src, 1000) then return nil end
+    creatingWorld = true
+    local id = MySQL.insert.await('INSERT INTO rsg_moonshine_stills (citizenid, x, y, z, heading, hopper, output) VALUES (?, ?, ?, ?, ?, ?, 0)',
+        { WORLD, coords.x, coords.y, coords.z, 0.0, '{}' })
+    creatingWorld = false
+    if not id then return nil end
+    Stills[id] = { id = id, citizenid = WORLD, coords = coords, heading = 0.0, hopper = {}, output = 0, fuel = 0, last_tick = os.time() }
+    TriggerClientEvent('rsg-moonshine:client:syncStill', -1, publicStill(Stills[id]))
+    return publicStill(Stills[id])
+end)
+
+---------------------------------
 -- place
 ---------------------------------
 local placing = {} -- [citizenid] = true while a placement DB insert is in flight
@@ -506,7 +529,7 @@ RegisterNetEvent('rsg-moonshine:server:destroy', function(id)
     if type(id) ~= 'number' then return end
     local Player = RSGCore.Functions.GetPlayer(src)
     local still = Stills[id]
-    if not Player or not still then return end
+    if not Player or not still or still.citizenid == WORLD then return end
     if not isNear(src, still.coords) then return notify(src, locale('sv_too_far'), 'error') end
     -- a raid takes Config.DestroyTime on the client; refuse faster repeats (skipped progress bar)
     if throttled('destroy', src, Config.DestroyTime) then return end
